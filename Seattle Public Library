@@ -1,0 +1,52 @@
+# Download Seattle Public Library Checkouts Data
+curl::multi_download(
+  "https://r4ds.s3.us-west-2.amazonaws.com/seattle-library-checkouts.csv",
+  "seattle-library-checkouts.csv",
+  resume = TRUE
+)
+
+# Load Dataset
+seattle_data <- open_dataset("data/seattle-library-checkouts")
+
+# ------------------------------
+# Top Most Borrowed Authors
+# ------------------------------
+
+author_data <- seattle_data %>%
+  filter(!is.na(Creator), Creator != "")
+
+top_authors <- author_data %>%
+  count(Creator, sort = TRUE) %>%
+  head(20) %>%
+  collect()
+
+ggplot(top_authors, aes(x = reorder(Creator, n), y = n)) +
+  geom_col(fill = "tomato") +
+  coord_flip() +
+  labs(
+    title = "Top 20 Most Borrowed Authors",
+    x = "Author",
+    y = "Number of Checkouts"
+  ) +
+  theme_minimal()
+
+# ------------------------------
+# Top Checked-out Titles
+# ------------------------------
+
+top_titles <- seattle_data %>%
+  filter(!is.na(Title), Title != "") %>%
+  count(Title, sort = TRUE) %>%
+  head(10) %>%
+  collect() %>%
+  mutate(Title = stringr::str_wrap(Title, width = 40))
+
+ggplot(top_titles, aes(x = reorder(Title, n), y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Checked-out Titles",
+    x = "Title",
+    y = "Number of Checkouts"
+  ) +
+  theme_minimal()
